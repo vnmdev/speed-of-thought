@@ -8,9 +8,9 @@ This is an interface experiment, not a claim that reading one word at a time is 
 
 ## Interaction hypothesis
 
-- A spring-loaded drag control has a neutral centre. Dragging right moves forward; distance from centre controls speed. Returning to centre pauses.
-- Dragging left enters **recovery mode**: show the current sentence or visual row with the last-read word highlighted. Farther left reveals preceding sentences or the paragraph. The reader can pick a restart point and move forward again. Reverse means navigation, not backwards playback.
-- The scroll wheel may offer a second control scheme: forward scroll advances or accelerates, reverse scroll opens context. This is an experiment, not yet a settled mapping; trackpads and mice behave differently.
+- Use one linear control with six notches, left to right: **R2 · R1 · P · F1 · F2 · F3**. Compare a spring-loaded drag version that returns to pause on release with a latched version that stays on the chosen notch.
+- Moving into **reverse mode 1** backs up word by word at a configurable pace. **Reverse mode 2** moves through earlier visual lines at a configurable pace while highlighting the current word. Compare context replacing the focused view with context shown beside it. The reader can pick a restart point and move forward again. Keep the saved position anchored to words and sentences, since visual lines change with viewport width.
+- The scroll wheel is a third control scheme that moves through the same notches. F1 is slow, F2 comfortable, and F3 maximum forward speed. Trackpads and mice behave differently.
 - A keyboard fallback should cover play/pause, speed, rewind, and manual mode. The experience must not require holding a mouse button for a long answer.
 - Manual mode shows ordinary scrollable text and preserves the exact reading position when switching modes.
 
@@ -18,11 +18,11 @@ Use **sentences or short clauses as stable internal anchors**. Visual rows chang
 
 ## Smallest prototype: test the reader, not the model
 
-Build a single browser page with a few fixed sample passages. No LLM connection, accounts, persistence service, or agent tools.
+Build a single browser page with a text box prefilled with a sample answer. The reader can replace it with their own passage. No LLM connection, accounts, persistence service, or agent tools.
 
-1. Segment a passage into sentences and words, retaining stable IDs and offsets.
+1. Segment the entered passage into sentences and words, retaining stable IDs and offsets.
 2. Implement focused forward playback with adjustable speed and punctuation pauses.
-3. Implement drag-to-control and contextual rewind. Display the current sentence, highlight the last-read word, and let the reader choose where to resume.
+3. Implement drag-to-control and both reverse modes. Display the current sentence or visual line, highlight the current word, and let the reader choose where to resume.
 4. Add manual scrolling and keyboard controls while preserving position.
 5. Test the wheel as an alternative, with an obvious way to switch schemes or disable it.
 
@@ -58,4 +58,4 @@ No prose-rewriting model, speech input, elaborate branch-tree visualisation, des
 
 ## First build session
 
-Create a page containing one fixed, multi-paragraph answer. Implement the playback state machine and a simple keyboard control before polishing the drag control. Test one-word versus short-phrase display on the same passage. Then implement the contextual rewind and compare how quickly a reader can recover their place.
+Create a page containing an editable text box with a sample multi-paragraph answer. Implement the playback state machine and a simple keyboard control before polishing the drag control. Test one-word versus short-phrase display on the same passage. Then implement the contextual rewind and compare how quickly a reader can recover their place.
