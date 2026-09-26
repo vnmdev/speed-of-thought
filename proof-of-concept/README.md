@@ -24,4 +24,10 @@ Open the local URL printed by Vite. The page uses no model service. F1–F3 WPM 
 
 Run `npm test` for the passage and reader-state checks, or `npm run build` to type-check and produce a static build.
 
+## GitHub Pages
+
+The prototype is published at [vnmdev.github.io/speed-of-thought](https://vnmdev.github.io/speed-of-thought/). The [Pages workflow](../.github/workflows/pages.yml) tests, builds, and deploys it on every push to `main`. It can also be run manually from GitHub's Actions tab.
+
+The deployment builds with `--base=/speed-of-thought/` and uploads only `proof-of-concept/dist`. Repository Settings → Pages must use **GitHub Actions** as the source. Local development keeps its normal root URL.
+
 See the [prototype plan](PLAN.md) and the [project plan](../PLAN.md) for the design goals.
