@@ -1,4 +1,4 @@
-# Browser proof of concept — draft build plan
+# Browser proof of concept — build plan
 
 ## Goal
 
@@ -8,7 +8,7 @@ Find out whether focused playback and contextual rewind make long prose answers 
 
 - Segment the entered passage into paragraphs, sentences, and words. Give segments stable IDs and text offsets so a change in viewport width cannot move the saved reading position. Loading changed text starts a new reading position.
 - Keep one reading position shared by focused playback, recovery, and ordinary scrolling.
-- Start with one-word playback, then add a short-phrase display option. Add modest punctuation pauses and a visible speed setting.
+- F1 shows the current rendered line with a word-by-word highlight. F2 and F3 show a focused word or short phrase. Add modest punctuation pauses and a visible speed setting.
 - Keep controls separate from the playback state. This lets us compare them without changing the text or position model.
 
 ## Shared pace selector
@@ -20,16 +20,16 @@ The selector is linear: **R2 · R1 · P · F1 · F2 · F3**.
 | R2 | Move backward through visual lines at a configurable pace, showing context and highlighting the current word. |
 | R1 | Move backward word by word at a configurable pace. |
 | P | Pause. |
-| F1 | Play forward at a slow, configurable pace. |
-| F2 | Play forward at a comfortable, configurable pace. |
-| F3 | Play forward at a maximum, configurable pace. |
+| F1 | Highlight words forward across the whole rendered line at a slow, configurable pace. |
+| F2 | Play forward at a comfortable, configurable pace with a focused word or phrase. |
+| F3 | Play forward at a maximum, configurable pace with a focused word or phrase. |
 
 The held drag returns to P on release. The latched drag stays on the selected notch. Wheel movement changes the selected notch. Since visual lines reflow, the saved location remains a word position rather than a line number.
 
 ## Build sequence
 
-1. Add a text box with a reasonable multi-paragraph default passage and a way to load edited text into the reader. Build the segment model, position tracking, and keyboard play/pause and step controls.
-2. Add focused playback, speed adjustment, punctuation pauses, and a switch between one word and short phrases.
+1. Add a text box with a reasonable multi-paragraph default passage and a Load button that resets to the first word. Build the segment model, position tracking, and keyboard play/pause and step controls.
+2. Add F1 line playback, F2/F3 focused playback, speed adjustment, punctuation pauses, and a focused word/short-phrase switch.
 3. Add two reverse modes. R1 backs up word by word at a configurable pace. R2 moves through earlier visual lines at a configurable pace while highlighting the current word. Let the reader choose a restart point. Provide two layouts to compare: context replaces the focused view, or context appears beside it.
 4. Add ordinary scrolling with synchronized position when entering or leaving focused mode.
 5. Add three selectable input schemes using the shared six-notch selector: a held drag that returns to P on release, a latched drag that stays on the chosen notch, and a scroll wheel that changes notches. Let the reader adjust the speed values of the paced zones.

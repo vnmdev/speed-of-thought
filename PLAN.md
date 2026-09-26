@@ -2,7 +2,7 @@
 
 ## The idea
 
-A browser-based reading surface for LLM output. Forward motion presents text at a fixed focal point, potentially one word at a time. When the reader loses the thread, moving backward should reveal *more context*, not flash individual words in reverse. The reader can pause, inspect the surrounding thought, and resume or eventually fork a conversation from it.
+A browser-based reading surface for LLM output. Forward motion can present words at a fixed focal point or keep a whole line visible while highlighting each word. When the reader loses the thread, they can move backward through focused words or visible lines, pause, inspect the surrounding thought, and resume or eventually fork a conversation from it.
 
 This is an interface experiment, not a claim that reading one word at a time is always faster or better. Comprehension and comfort matter more than peak words per minute.
 
@@ -10,7 +10,7 @@ This is an interface experiment, not a claim that reading one word at a time is 
 
 - Use one linear control with six notches, left to right: **R2 · R1 · P · F1 · F2 · F3**. Compare a spring-loaded drag version that returns to pause on release with a latched version that stays on the chosen notch.
 - Moving into **reverse mode 1** backs up word by word at a configurable pace. **Reverse mode 2** moves through earlier visual lines at a configurable pace while highlighting the current word. Compare context replacing the focused view with context shown beside it. The reader can pick a restart point and move forward again. Keep the saved position anchored to words and sentences, since visual lines change with viewport width.
-- The scroll wheel is a third control scheme that moves through the same notches. F1 is slow, F2 comfortable, and F3 maximum forward speed. Trackpads and mice behave differently.
+- The scroll wheel is a third control scheme that moves through the same notches. F1 is a slower line view with a word-by-word highlight; F2 and F3 use a fixed focal point at comfortable and maximum forward speeds. Trackpads and mice behave differently.
 - A keyboard fallback should cover play/pause, speed, rewind, and manual mode. The experience must not require holding a mouse button for a long answer.
 - Manual mode shows ordinary scrollable text and preserves the exact reading position when switching modes.
 
@@ -30,7 +30,7 @@ Start with prose. Code, tables, equations, and diagrams should remain spatially 
 
 ## What to learn from the prototype
 
-- Is one word the right display unit, or are short phrases easier to follow?
+- When is a full highlighted line easier to follow than one word or a short phrase at a fixed point?
 - Does the drag control feel natural, or tiring? Is release-to-pause the right behaviour?
 - Does contextual rewind actually restore comprehension quickly? How much context is enough?
 - Does the wheel feel precise on both a mouse and a trackpad, or does it cause accidental jumps?

@@ -6,4 +6,4 @@ The first experiment uses reader-supplied text with a sample answer prefilled. T
 
 See [PLAN.md](PLAN.md) for the interaction design, milestones, and open questions.
 
-Status: planning. The browser prototype will live in [proof-of-concept](proof-of-concept/); no application code has been written yet.
+Status: a local browser prototype is available in [proof-of-concept](proof-of-concept/). See its README for how to run it.
