@@ -6,4 +6,4 @@ The first experiment uses fixed text. The question is whether the interaction is
 
 See [PLAN.md](PLAN.md) for the interaction design, milestones, and open questions.
 
-Status: planning. No application code or remote repository yet.
+Status: planning. The browser prototype will live in [proof-of-concept](proof-of-concept/); no application code has been written yet.
