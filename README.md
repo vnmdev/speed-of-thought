@@ -19,5 +19,3 @@ LLM connections, the conversational interface, prose-adjusting prompts, full Mar
 See [proof-of-concept](proof-of-concept/) for the prototype and instructions for running it locally.
 
 See [PLAN.md](PLAN.md) for the interaction design, milestones, and open questions.
-
-The [DMN terrarium sample](samples/dmn-terrarium.txt) is plain prose prepared for the reader. Paste it into **edit passage** to try a longer text.
