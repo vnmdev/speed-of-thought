@@ -1,9 +1,10 @@
 import './style.css';
 import { parsePassage, type Passage } from './model.ts';
+import { ReaderZoom } from './motion.ts';
 import {
-  delayFor, initialState, phraseEndIndex, selectNotch, shiftNotch, stepPreviousLine,
-  stepWord, type ControlScheme, type FocusUnit, type Notch, type ReaderState,
-  type RecoveryLayout,
+  applyWheel, delayFor, initialState, playbackEndIndex, presentationFor, selectNotch,
+  stepWord, type FocusUnit, type ReaderState,
+  type ContextLayout,
 } from './reader.ts';
 
 const SAMPLE = `A good explanation gives you somewhere to stand before it asks you to move. It names the problem, shows why the obvious answer falls short, and leaves enough space for the next idea to arrive. Reading it is rarely a straight line. A surprising sentence can make you pause; a small detail may send you back to an earlier claim.
@@ -15,36 +16,53 @@ Imagine a reader that keeps your place while you change your pace. At one speed 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
   <header class="site-header">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">S<span>·</span>T</span><span>Speed of Thought</span></div>
-    <span class="header-tag">READING EXPERIMENT / 01</span>
+    <a class="brand" href="#reader-card" aria-label="Speed of Thought reader"><span class="brand-mark" aria-hidden="true">&gt;_</span><span>speedofthought<small>read at your own pace</small></span></a>
+    <span class="header-tag">local / prototype</span>
   </header>
   <main class="page-shell">
-    <div class="page-heading"><div><p class="eyebrow">A READER YOU CAN STEER</p><h1>Stay with the thought.</h1><p class="intro">Set a pace. Slow down to a line. Go back when you need the thread again.</p></div><span class="prototype-pill">Browser prototype</span></div>
     <section class="reader-card" id="reader-card" aria-label="Reader" tabindex="-1">
-      <div class="reader-topline"><span id="view-label">FOCUSED READING</span><span id="progress-label">WORD 1 OF 1</span></div>
+      <div class="reader-toolbar" aria-label="Reader settings">
+        <span class="wheel-label">wheel / arrow keys</span>
+        <span class="toolbar-divider" aria-hidden="true">/</span>
+        <div class="setting"><label for="scroll-up-select">up ↑</label><select id="scroll-up-select"><option value="pause">straight to pause</option><option value="step">step down speeds</option></select></div>
+        <span class="toolbar-divider" aria-hidden="true">/</span>
+        <div class="setting"><label for="unit-select">f3</label><select id="unit-select"><option value="word">one word</option><option value="phrase">short phrase</option></select></div>
+        <span class="toolbar-divider" aria-hidden="true">/</span>
+        <div class="setting"><label for="layout-select">context</label><select id="layout-select"><option value="replace">block</option><option value="alongside">split</option></select></div>
+        <span class="toolbar-divider" aria-hidden="true">/</span>
+        <button class="text-button" id="edit-button" type="button">edit passage ↗</button>
+      </div>
+      <div class="reader-topline"><span id="view-label">reading in context</span><span id="progress-label">word 1 of 1</span></div>
       <div class="reader-stage" id="reader-stage">
-        <div class="stage-main" id="stage-main"><div class="stage-kicker" id="stage-kicker">PAUSED / READY WHEN YOU ARE</div><div id="reader-display" aria-live="off"></div><div class="stage-support" id="stage-support"></div></div>
-        <div class="context-panel" id="context-panel" hidden><div class="context-heading"><span>CONTEXT</span><span id="context-position"></span></div><div class="context-lines" id="context-lines"></div><p class="context-hint">Select a word to resume from there.</p></div>
-        <div class="manual-panel" id="manual-panel" hidden><p class="manual-hint">Scroll naturally. Select a word to set your place.</p><article id="manual-article" class="passage-text"></article></div>
+        <div class="stage-main" id="stage-main"><div class="stage-kicker" id="stage-kicker"></div><div id="reader-display" aria-live="off"></div><div class="stage-support" id="stage-support"></div></div>
+        <div class="context-panel" id="context-panel" hidden><div class="context-heading"><span>context</span><span id="context-position"></span></div><div class="context-lines" id="context-lines"></div><p class="context-hint">click a word to set your place</p></div>
+        <div class="manual-panel" id="manual-panel" hidden><p class="manual-hint">drag the scrollbar to browse / wheel returns to the reader / click a word to set your place</p><article id="manual-article" class="passage-text"></article></div>
       </div>
       <div class="reader-bottom">
-        <div class="selector-heading"><div><span class="eyebrow">PACE SELECTOR</span><strong id="notch-description">Paused</strong></div><button class="text-button" id="view-toggle" type="button">Ordinary reading ↗</button></div>
-        <div class="notch-track" id="notch-track" role="group" aria-label="Reading pace">
-          <button type="button" data-notch="R2"><span>R2</span><small>line back</small></button>
-          <button type="button" data-notch="R1"><span>R1</span><small>word back</small></button>
-          <button type="button" data-notch="P"><span>P</span><small>pause</small></button>
-          <button type="button" data-notch="F1"><span>F1</span><small>line forward</small></button>
-          <button type="button" data-notch="F2"><span>F2</span><small>focused</small></button>
-          <button type="button" data-notch="F3"><span>F3</span><small>fast</small></button>
+        <div class="selector-heading"><strong id="notch-description">paused in context</strong><button class="text-button" id="view-toggle" type="button">ordinary reading ↗</button></div>
+        <div class="notch-track" id="notch-track" role="list" aria-label="Reading pace, controlled by the scroll wheel or up and down arrow keys">
+          <div class="notch" role="listitem" data-notch="P"><span>P</span><small>pause</small></div>
+          <div class="notch" role="listitem" data-notch="F1"><span>F1</span><small>context</small></div>
+          <div class="notch" role="listitem" data-notch="F2"><span>F2</span><small>word strip</small></div>
+          <div class="notch" role="listitem" data-notch="F3"><span>F3</span><small>focus</small></div>
         </div>
-        <div class="track-meta"><span>← MORE CONTEXT</span><span>MORE MOMENTUM →</span></div>
+        <div class="mode-speeds" role="group" aria-label="Words per minute for each mode">
+          <div class="paused-speed"><strong>0</strong><small>wpm</small></div>
+          <label for="speed-F1"><input id="speed-F1" data-speed="F1" aria-label="F1 words per minute" type="number" min="60" step="10" required /><small>wpm</small></label>
+          <label for="speed-F2"><input id="speed-F2" data-speed="F2" aria-label="F2 words per minute" type="number" min="60" step="10" required /><small>wpm</small></label>
+          <label for="speed-F3"><input id="speed-F3" data-speed="F3" aria-label="F3 words per minute" type="number" min="60" step="10" required /><small>wpm</small></label>
+        </div>
+        <p class="speed-hint">edit the pace below each forward mode</p>
       </div>
+      <p class="wheel-note"><span id="scroll-up-hint"></span><span>·</span> ↓ F1 → F2 → F3 (wheel or keys)</p>
     </section>
-    <section class="workbench" aria-label="Prototype controls">
-      <div class="panel passage-panel"><div class="panel-heading"><div><p class="eyebrow">01 / SOURCE TEXT</p><h2>Bring your own thought.</h2></div><span class="panel-icon">✳</span></div><p>Paste a prose answer, then load it into the reader.</p><label class="field-label" for="passage-input">PASSAGE</label><textarea id="passage-input" spellcheck="false"></textarea><div class="panel-action"><span id="load-message" role="status">A sample is ready to read.</span><button class="primary-button" id="load-button" type="button">Load passage <span aria-hidden="true">↗</span></button></div></div>
-      <div class="panel settings-panel"><div class="panel-heading"><div><p class="eyebrow">02 / MAKE IT YOURS</p><h2>Choose how it moves.</h2></div><span class="panel-icon">⌁</span></div><div class="setting"><label for="scheme-select">Input method</label><select id="scheme-select"><option value="latched">Drag · stays on notch</option><option value="held">Drag · release to pause</option><option value="wheel">Wheel · anywhere in reader</option></select></div><div class="setting"><label for="unit-select">Focused display <small>F2 & F3</small></label><select id="unit-select"><option value="word">One word</option><option value="phrase">Short phrase</option></select></div><div class="setting"><label for="layout-select">R2 context layout</label><select id="layout-select"><option value="replace">Replace focused view</option><option value="alongside">Appear alongside</option></select></div><details class="speed-details"><summary>Adjust speeds <span aria-hidden="true">⌄</span></summary><div class="speed-grid"><label>R2 <input data-speed="R2" type="number" min="0.25" max="4" step="0.25" /> <small>lines/sec</small></label><label>R1 <input data-speed="R1" type="number" min="60" max="900" step="10" /> <small>wpm</small></label><label>F1 <input data-speed="F1" type="number" min="60" max="900" step="10" /> <small>wpm</small></label><label>F2 <input data-speed="F2" type="number" min="60" max="900" step="10" /> <small>wpm</small></label><label>F3 <input data-speed="F3" type="number" min="60" max="900" step="10" /> <small>wpm</small></label></div></details><div class="keyboard-note"><span class="keyboard-icon">⌘</span><p><strong>Keyboard, too.</strong> Space plays or pauses · [ / ] changes notch · ← / → steps a word while paused · M switches view.</p></div></div>
+    <section class="source-panel" id="source-panel" aria-labelledby="editor-heading" hidden>
+      <div class="editor-heading"><h1 id="editor-heading">edit passage</h1><button class="text-button" id="cancel-edit-button" type="button">cancel / back to reader</button></div>
+      <label class="field-label" for="passage-input">source text</label>
+      <textarea id="passage-input" spellcheck="false"></textarea>
+      <div class="panel-action"><span id="load-message" role="status">sample loaded</span><button class="primary-button" id="load-button" type="button">load passage ↵</button></div>
     </section>
-    <footer><span>SPEED OF THOUGHT</span><span>A small experiment in keeping your place.</span></footer>
+    <footer><span>speedofthought / experimental reader</span><span>context → strip → focus</span></footer>
   </main>
   <div class="measure-text" id="measure-text" aria-hidden="true"></div>
 `;
@@ -61,18 +79,39 @@ const manualArticle = $<HTMLElement>('#manual-article');
 const measure = $<HTMLDivElement>('#measure-text');
 const track = $<HTMLDivElement>('#notch-track');
 const readerCard = $<HTMLElement>('#reader-card');
+const sourcePanel = $<HTMLElement>('#source-panel');
+let editing = false;
 
 let passage: Passage = parsePassage(SAMPLE);
 let state: ReaderState = initialState();
+const speedStorageKey = 'speed-of-thought.wpm.v1';
+try {
+  const saved: unknown = JSON.parse(localStorage.getItem(speedStorageKey) ?? 'null');
+  if (saved && typeof saved === 'object') {
+    for (const mode of ['F1', 'F2', 'F3'] as const) {
+      const value = (saved as Record<string, unknown>)[mode];
+      if (typeof value === 'number' && Number.isFinite(value) && value >= 60) {
+        state.speeds[mode] = value;
+      }
+    }
+  }
+} catch {
+  // Keep the defaults if storage is unavailable or its contents are invalid.
+}
+const scrollUpStorageKey = 'speed-of-thought.scroll-up.v1';
+try {
+  const saved = localStorage.getItem(scrollUpStorageKey);
+  if (saved === 'pause' || saved === 'step') state.scrollUp = saved;
+} catch {
+  // Keep the default wheel behavior when browser storage is unavailable.
+}
 let timer: number | undefined;
 let passageVersion = 0;
 let measured: { key: string; lines: number[][] } | undefined;
 let manualVersion = -1;
-let wheelAccumulated = 0;
-let lastWheelAt = 0;
-let lastWheelStepAt = 0;
-let pointerActive = false;
-let pointerId = -1;
+const zoom = new ReaderZoom();
+let renderedPresentation = '';
+let renderedPassageVersion = -1;
 
 passageInput.value = SAMPLE;
 
@@ -101,12 +140,15 @@ function appendWords(parent: HTMLElement, firstIndex: number, lastIndex: number,
   parent.append(document.createTextNode(whole ? tail : tail.trimEnd()));
 }
 
-function lineGroups(mode: 'f1' | 'r2'): number[][] {
-  const width = Math.max(200, Math.floor(mode === 'f1' ? display.clientWidth : contextLines.clientWidth - 26));
-  const key = `${passageVersion}:${mode}:${width}`;
+function lineGroups(): number[][] {
+  const width = Math.max(200, Math.floor(contextLines.clientWidth - 26));
+  const contextStyle = getComputedStyle(contextLines);
+  const key = `${passageVersion}:${width}:${contextStyle.font}`;
   if (measured?.key === key) return measured.lines;
-  measure.className = `measure-text ${mode}`;
+  measure.className = 'measure-text context';
   measure.style.width = `${width}px`;
+  measure.style.font = contextStyle.font;
+  measure.style.letterSpacing = contextStyle.letterSpacing;
   measure.replaceChildren();
   appendWords(measure, 0, passage.words.length - 1, false, true);
   const lines: number[][] = [];
@@ -131,36 +173,48 @@ function renderManual(): void {
   manualArticle.querySelector<HTMLElement>(`[data-word-index="${state.cursor}"]`)?.classList.add('current-word');
 }
 
-function renderF1(): void {
-  const lines = lineGroups('f1');
-  const current = lines.findIndex((line) => line.includes(state.cursor));
-  const line = lines[current] ?? [state.cursor];
-  display.className = 'line-display';
-  display.replaceChildren();
-  appendWords(display, line[0], line[line.length - 1]);
-  $('#stage-kicker').textContent = 'F1 / READ THE WHOLE LINE';
-  $('#stage-support').textContent = `Line ${current + 1} of ${lines.length} · the highlight follows each word`;
-}
-
 function renderFocusedWord(): void {
-  const isReverse = state.notch === 'R1';
-  const word = passage.words[state.cursor];
-  const phraseEnd = !isReverse && state.unit === 'phrase'
-    ? phraseEndIndex(passage, state.cursor)
-    : state.cursor;
-  const last = phraseEnd;
+  const last = playbackEndIndex(state, passage);
   display.className = last > state.cursor ? 'phrase-display' : 'word-display';
-  const afterLast = passage.words[last + 1]?.start ?? passage.source.length;
-  display.textContent = passage.source.slice(word.start, afterLast).trimEnd();
-  $('#stage-kicker').textContent = isReverse ? 'R1 / WORD BY WORD, BACKWARD' : state.notch === 'P' ? 'PAUSED / READY WHEN YOU ARE' : `${state.notch} / FOLLOW THE WORDS`;
-  $('#stage-support').textContent = isReverse ? 'One word back at a time.' : state.notch === 'P' ? 'Choose a notch below or press Space.' : state.unit === 'phrase' ? 'A few words at a time.' : 'Keep your eyes here.';
+  display.replaceChildren();
+  appendWords(display, state.cursor, last);
+  $('#stage-kicker').textContent = `${state.notch} / FOLLOW THE WORDS`;
+  $('#stage-support').textContent = state.unit === 'phrase' ? 'A few words at a time.' : 'Keep your eyes here.';
 }
 
-function renderR2(): void {
-  const lines = lineGroups('r2');
+function renderWordStrip(): void {
+  display.className = 'word-strip';
+  display.replaceChildren();
+  const before = document.createElement('div');
+  before.className = 'strip-neighbors before';
+  const center = document.createElement('div');
+  center.className = 'strip-center';
+  const after = document.createElement('div');
+  after.className = 'strip-neighbors after';
+
+  for (const [container, first, last] of [
+    [before, Math.max(0, state.cursor - 3), state.cursor - 1],
+    [after, state.cursor + 1, Math.min(passage.words.length - 1, state.cursor + 3)],
+  ] as const) {
+    const text = document.createElement('span');
+    text.className = 'strip-neighbor-text';
+    appendWords(text, first, last);
+    for (const word of text.querySelectorAll<HTMLElement>('.word-token')) {
+      word.dataset.distance = String(Math.abs(Number(word.dataset.wordIndex) - state.cursor));
+    }
+    container.append(text);
+  }
+  appendWords(center, state.cursor, state.cursor);
+  display.append(before, center, after);
+  $('#stage-kicker').textContent = 'f2 / word strip';
+  $('#stage-support').textContent = 'current word centred · three words either side';
+}
+
+function renderContext(): void {
+  const lines = lineGroups();
   const current = lines.findIndex((line) => line.includes(state.cursor));
-  const from = Math.max(0, current - 2);
-  const to = Math.min(lines.length - 1, current + 2);
+  const from = Math.max(0, Math.min(current - 2, lines.length - 5));
+  const to = Math.min(lines.length - 1, from + 4);
   contextLines.replaceChildren();
   for (let index = from; index <= to; index++) {
     const line = lines[index];
@@ -172,57 +226,77 @@ function renderR2(): void {
   $('#context-position').textContent = `LINE ${current + 1} / ${lines.length}`;
   if (state.layout === 'alongside') {
     display.className = 'word-display side-word';
-    const word = passage.words[state.cursor];
-    display.textContent = passage.source.slice(word.start, passage.words[state.cursor + 1]?.start ?? passage.source.length).trimEnd();
-    $('#stage-kicker').textContent = 'R2 / FIND THE THREAD';
+    display.replaceChildren();
+    appendWords(display, state.cursor, state.cursor);
+    $('#stage-kicker').textContent = state.notch === 'P' ? 'PAUSED / TAKE IN THE CONTEXT' : 'F1 / FOLLOW THE HIGHLIGHT';
     $('#stage-support').textContent = 'The highlighted word is your restart point.';
   }
 }
 
 function render(): void {
-  const manual = state.view === 'manual';
-  const r2 = !manual && state.notch === 'R2';
+  if (editing) return;
+  $('#scroll-up-hint').textContent = state.scrollUp === 'step'
+    ? '↑ F3 → F2 → F1 → P → lines back'
+    : '↑ pause + one line back';
+  const view = presentationFor(state);
+  const manual = view === 'manual';
+  const context = view === 'context';
+  const presentation = context ? `context-${state.layout}` : view;
+  const shouldZoom = renderedPresentation && presentation !== renderedPresentation
+    && !manual && renderedPresentation !== 'manual' && renderedPassageVersion === passageVersion;
+  const previousWord = shouldZoom ? zoom.capture(visibleWord()) : undefined;
+  if (!shouldZoom) zoom.cancel();
   readerCard.classList.toggle('is-manual', manual);
-  stage.classList.toggle('is-r2', r2);
-  stage.classList.toggle('is-alongside', r2 && state.layout === 'alongside');
-  stageMain.hidden = manual || (r2 && state.layout === 'replace');
-  contextPanel.hidden = !r2;
+  stage.classList.toggle('is-context', context);
+  stage.classList.toggle('is-alongside', context && state.layout === 'alongside');
+  stageMain.hidden = manual || (context && state.layout === 'replace');
+  contextPanel.hidden = !context;
   manualPanel.hidden = !manual;
-  $('#view-label').textContent = manual ? 'ORDINARY READING' : r2 ? 'CONTEXTUAL REWIND' : 'FOCUSED READING';
+  $('#view-label').textContent = manual ? 'ORDINARY READING' : context ? 'READING IN CONTEXT' : 'FOCUSED READING';
   $('#progress-label').textContent = `WORD ${state.cursor + 1} OF ${passage.words.length}`;
   $('#view-toggle').textContent = manual ? 'Return to focus ↗' : 'Ordinary reading ↗';
   $('#notch-description').textContent = {
-    R2: 'Rewind by line', R1: 'Rewind by word', P: 'Paused',
-    F1: 'Forward with the line', F2: 'Focused pace', F3: 'Fast focused pace',
-  }[state.notch];
-  track.querySelectorAll<HTMLButtonElement>('button[data-notch]').forEach((button) => {
-    const selected = button.dataset.notch === state.notch;
-    button.classList.toggle('selected', selected);
-    button.setAttribute('aria-pressed', String(selected));
+    P: 'Paused / scroll up to rewind',
+    F1: 'Forward in context', F2: 'Word strip', F3: 'Focused pace',
+  }[state.notch] + (state.notch === 'P' ? '' : ` · ${state.speeds[state.notch]} WPM`);
+  track.querySelectorAll<HTMLElement>('[data-notch]').forEach((indicator) => {
+    const selected = indicator.dataset.notch === state.notch;
+    indicator.classList.toggle('selected', selected);
+    if (selected) indicator.setAttribute('aria-current', 'step');
+    else indicator.removeAttribute('aria-current');
   });
   if (manual) renderManual();
-  else if (r2) renderR2();
-  else if (state.notch === 'F1') renderF1();
+  else if (context) renderContext();
+  else if (view === 'strip') renderWordStrip();
   else renderFocusedWord();
+  if (previousWord) zoom.play(previousWord, visibleWord(previousWord.wordIndex), context ? contextLines : display);
+  renderedPresentation = presentation;
+  renderedPassageVersion = passageVersion;
+}
+
+function visibleWord(wordIndex?: string): HTMLElement | null {
+  const selector = wordIndex === undefined ? '.current-word' : `[data-word-index="${wordIndex}"]`;
+  if (!contextPanel.hidden) return contextLines.querySelector<HTMLElement>(selector);
+  if (!stageMain.hidden) return display.querySelector<HTMLElement>(selector);
+  return null;
 }
 
 function schedule(): void {
   window.clearTimeout(timer);
   timer = undefined;
-  if (state.view !== 'focused' || state.notch === 'P') return;
-  const phrase = (state.notch === 'F2' || state.notch === 'F3') && state.unit === 'phrase';
-  const phraseEnd = phrase ? phraseEndIndex(passage, state.cursor) : state.cursor;
-  const wordInterval = (state.notch === 'F2' || state.notch === 'F3') ? 60000 / state.speeds[state.notch] : 0;
-  const duration = delayFor({ ...state, cursor: phraseEnd }, passage) + (phraseEnd - state.cursor) * wordInterval;
+  if (editing || state.view !== 'focused' || state.notch === 'P') return;
+  const phrase = state.notch === 'F3' && state.unit === 'phrase';
+  const phraseEnd = playbackEndIndex(state, passage);
+  const wordInterval = state.notch === 'F3' ? 60000 / state.speeds.F3 : 0;
+  const duration = delayFor({ ...state, cursor: phraseEnd }, passage) + (phraseEnd - state.cursor) * wordInterval + zoom.remainingMs();
   timer = window.setTimeout(() => {
     const prior = state;
-    if (state.notch === 'R2') state = stepPreviousLine(state, lineGroups('r2'));
-    else if (phrase) {
+    if (phrase) {
       const next = phraseEnd + 1;
       state = next >= passage.words.length
         ? selectNotch({ ...state, cursor: phraseEnd }, 'P')
         : { ...state, cursor: next };
-    } else state = stepWord(state, state.notch === 'R1' ? -1 : 1, passage.words.length);
+    } else state = stepWord(state, 1, passage.words.length);
     if (state === prior) state = selectNotch(state, 'P');
     render();
     schedule();
@@ -248,54 +322,56 @@ function toggleManual(): void {
   }
 }
 
-function notchFromPointer(clientX: number): Notch {
-  const buttons = [...track.querySelectorAll<HTMLButtonElement>('button[data-notch]')];
-  const closest = buttons.reduce((best, button) => {
-    const box = button.getBoundingClientRect();
-    const distance = Math.abs(clientX - (box.left + box.width / 2));
-    return distance < best.distance ? { button, distance } : best;
-  }, { button: buttons[0], distance: Infinity });
-  return closest.button.dataset.notch as Notch;
-}
-
-track.addEventListener('pointerdown', (event) => {
-  event.preventDefault();
-  readerCard.focus({ preventScroll: true });
-  pointerActive = true;
-  pointerId = event.pointerId;
-  track.setPointerCapture(event.pointerId);
-  update({ ...selectNotch(state, notchFromPointer(event.clientX)), view: 'focused' });
-});
-track.addEventListener('pointermove', (event) => {
-  if (pointerActive && event.pointerId === pointerId) update(selectNotch(state, notchFromPointer(event.clientX)));
-});
-function endPointer(event: PointerEvent): void {
-  if (!pointerActive || event.pointerId !== pointerId) return;
-  pointerActive = false;
-  if (state.scheme === 'held') update(selectNotch(state, 'P'));
-}
-track.addEventListener('pointerup', endPointer);
-track.addEventListener('pointercancel', endPointer);
-track.addEventListener('click', (event) => {
-  if (event.detail !== 0) return;
-  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-notch]');
-  if (button) update({ ...selectNotch(state, button.dataset.notch as Notch), view: 'focused' });
-});
-
-readerCard.addEventListener('wheel', (event) => {
-  if (state.scheme !== 'wheel' || state.view !== 'focused' || (event.target as HTMLElement).closest('input, select, textarea')) return;
-  event.preventDefault();
-  const now = performance.now();
-  if (now - lastWheelAt > 300) wheelAccumulated = 0;
-  lastWheelAt = now;
-  const amount = event.deltaY * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? 600 : 1);
-  wheelAccumulated += amount;
-  if (Math.abs(wheelAccumulated) >= 75 && now - lastWheelStepAt >= 180) {
-    update(shiftNotch(state, Math.sign(wheelAccumulated)));
-    wheelAccumulated = 0;
-    lastWheelStepAt = now;
+// Measure the context layout even when a focused word or ordinary text is showing.
+// Restore the visible layout synchronously so the next render can animate from it.
+function linesForWheel(): number[][] {
+  if (!contextPanel.hidden) return lineGroups();
+  const previous = {
+    mainHidden: stageMain.hidden, contextHidden: contextPanel.hidden,
+    manualHidden: manualPanel.hidden,
+    context: stage.classList.contains('is-context'),
+    alongside: stage.classList.contains('is-alongside'),
+  };
+  stageMain.hidden = state.layout === 'replace';
+  contextPanel.hidden = false;
+  manualPanel.hidden = true;
+  stage.classList.add('is-context');
+  stage.classList.toggle('is-alongside', state.layout === 'alongside');
+  try {
+    return lineGroups();
+  } finally {
+    stageMain.hidden = previous.mainHidden;
+    contextPanel.hidden = previous.contextHidden;
+    manualPanel.hidden = previous.manualHidden;
+    stage.classList.toggle('is-context', previous.context);
+    stage.classList.toggle('is-alongside', previous.alongside);
   }
+}
+
+function changePace(direction: number): void {
+  const rewind = direction < 0 && (state.scrollUp === 'pause' || state.notch === 'P');
+  const next = applyWheel(state, direction, rewind ? linesForWheel() : []);
+  if (next.notch !== state.notch || next.cursor !== state.cursor || next.view !== state.view) update(next);
+}
+
+window.addEventListener('wheel', (event) => {
+  const target = event.target;
+  if (editing || event.ctrlKey || !Number.isFinite(event.deltaY) || event.deltaY === 0
+    || (target instanceof Element && target.closest('input, select, textarea, [contenteditable="true"]'))) return;
+  event.preventDefault();
+  // One vertical event is one action, regardless of wheel delta or deltaMode.
+  changePace(event.deltaY);
 }, { passive: false });
+
+window.addEventListener('keydown', (event) => {
+  if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+  const target = event.target;
+  if (editing || event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+    || (target instanceof HTMLElement && target.isContentEditable)
+    || (target instanceof Element && target.closest('input, select, textarea'))) return;
+  event.preventDefault();
+  changePace(event.key === 'ArrowUp' ? -1 : 1);
+});
 
 function wordTarget(event: Event): HTMLElement | null {
   const target = event.target;
@@ -315,6 +391,36 @@ for (const element of [manualArticle, contextLines]) element.addEventListener('k
 });
 
 $('#view-toggle').addEventListener('click', toggleManual);
+$('#edit-button').addEventListener('click', () => {
+  state = selectNotch(state, 'P');
+  editing = true;
+  schedule();
+  zoom.cancel();
+  passageInput.value = passage.source;
+  $('#load-message').textContent = 'paste your text, then load it to start from the beginning';
+  readerCard.hidden = true;
+  sourcePanel.hidden = false;
+  sourcePanel.scrollIntoView({ block: 'start' });
+  passageInput.focus({ preventScroll: true });
+});
+
+function closeEditor(next: ReaderState): void {
+  editing = false;
+  sourcePanel.hidden = true;
+  readerCard.hidden = false;
+  measured = undefined;
+  renderedPresentation = '';
+  update(next);
+  readerCard.scrollIntoView({ block: 'start' });
+  $('#edit-button').focus({ preventScroll: true });
+}
+
+$('#cancel-edit-button').addEventListener('click', () => closeEditor(state));
+$('.brand').addEventListener('click', (event) => {
+  if (!editing) return;
+  event.preventDefault();
+  closeEditor(state);
+});
 $('#load-button').addEventListener('click', () => {
   const next = parsePassage(passageInput.value);
   if (!next.words.length) {
@@ -326,57 +432,58 @@ $('#load-button').addEventListener('click', () => {
   measured = undefined;
   manualVersion = -1;
   $('#load-message').textContent = `${next.words.length} words loaded. Ready from the start.`;
-  update({ ...state, cursor: 0, notch: 'P', view: 'focused' });
+  closeEditor({ ...state, cursor: 0, notch: 'P', view: 'focused' });
 });
 
-$<HTMLSelectElement>('#scheme-select').addEventListener('change', (event) => {
-  const scheme = (event.target as HTMLSelectElement).value as ControlScheme;
-  update({ ...state, scheme, notch: scheme === 'held' ? 'P' : state.notch });
+const scrollUpSelect = $<HTMLSelectElement>('#scroll-up-select');
+scrollUpSelect.value = state.scrollUp;
+scrollUpSelect.addEventListener('change', () => {
+  const scrollUp = scrollUpSelect.value === 'step' ? 'step' : 'pause';
+  update({ ...state, scrollUp });
+  try {
+    localStorage.setItem(scrollUpStorageKey, scrollUp);
+  } catch {
+    $('.speed-hint').textContent = 'wheel setting updated / browser storage unavailable; changes will reset on reload';
+  }
 });
+
 $<HTMLSelectElement>('#unit-select').addEventListener('change', (event) => {
   update({ ...state, unit: (event.target as HTMLSelectElement).value as FocusUnit });
 });
 $<HTMLSelectElement>('#layout-select').addEventListener('change', (event) => {
   measured = undefined;
-  update({ ...state, layout: (event.target as HTMLSelectElement).value as RecoveryLayout });
+  update({ ...state, layout: (event.target as HTMLSelectElement).value as ContextLayout });
 });
 document.querySelectorAll<HTMLInputElement>('input[data-speed]').forEach((input) => {
   const key = input.dataset.speed as keyof ReaderState['speeds'];
   input.value = String(state.speeds[key]);
-  input.addEventListener('change', () => {
+  input.addEventListener('input', () => {
     const minimum = Number(input.min);
-    const maximum = Number(input.max);
     const value = Number(input.value);
-    if (!Number.isFinite(value) || value < minimum || value > maximum) {
-      input.value = String(state.speeds[key]);
+    if (!Number.isFinite(value) || value < minimum) {
       return;
     }
     update({ ...state, speeds: { ...state.speeds, [key]: value } });
+    try {
+      localStorage.setItem(speedStorageKey, JSON.stringify(state.speeds));
+      $('.speed-hint').textContent = 'pace saved in this browser';
+    } catch {
+      $('.speed-hint').textContent = 'pace updated / browser storage unavailable; changes will reset on reload';
+    }
   });
-});
-
-document.addEventListener('keydown', (event) => {
-  const target = event.target as HTMLElement;
-  if (event.defaultPrevented || target.closest('input, textarea, select, button, [data-word-index], [contenteditable="true"]') || event.metaKey || event.ctrlKey || event.altKey) return;
-  let next: ReaderState | undefined;
-  if (event.key === ' ') next = selectNotch(state, state.notch === 'P' ? state.lastForward : 'P');
-  else if (event.key === '[') next = shiftNotch(state, -1);
-  else if (event.key === ']') next = shiftNotch(state, 1);
-  else if (event.key === 'ArrowLeft' && state.notch === 'P') next = stepWord(state, -1, passage.words.length);
-  else if (event.key === 'ArrowRight' && state.notch === 'P') next = stepWord(state, 1, passage.words.length);
-  else if (event.key.toLowerCase() === 'm') { event.preventDefault(); toggleManual(); return; }
-  else if (event.key === 'Escape') next = selectNotch(state, 'P');
-  if (next) { event.preventDefault(); update({ ...next, view: 'focused' }); }
+  input.addEventListener('change', () => {
+    input.value = String(state.speeds[key]);
+  });
 });
 
 new ResizeObserver(() => {
   measured = undefined;
-  if (state.notch === 'F1' || state.notch === 'R2') render();
+  if (presentationFor(state) === 'context') { render(); schedule(); }
 }).observe(stage);
 
 document.fonts.ready.then(() => {
   measured = undefined;
-  if (state.notch === 'F1' || state.notch === 'R2') render();
+  if (presentationFor(state) === 'context') { render(); schedule(); }
 });
 
 render();

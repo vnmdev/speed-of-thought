@@ -1,15 +1,13 @@
 import type { Passage } from './model.ts';
 
-export const NOTCHES = ['R2', 'R1', 'P', 'F1', 'F2', 'F3'] as const;
+export const NOTCHES = ['P', 'F1', 'F2', 'F3'] as const;
 export type Notch = typeof NOTCHES[number];
-export type ControlScheme = 'held' | 'latched' | 'wheel';
 export type ReaderView = 'focused' | 'manual';
-export type RecoveryLayout = 'replace' | 'alongside';
+export type ContextLayout = 'replace' | 'alongside';
 export type FocusUnit = 'word' | 'phrase';
+export type ScrollUpBehavior = 'pause' | 'step';
 
 export interface SpeedSettings {
-  R2: number;
-  R1: number;
   F1: number;
   F2: number;
   F3: number;
@@ -18,36 +16,49 @@ export interface SpeedSettings {
 export interface ReaderState {
   cursor: number;
   notch: Notch;
-  lastForward: 'F1' | 'F2' | 'F3';
   view: ReaderView;
-  scheme: ControlScheme;
-  layout: RecoveryLayout;
+  layout: ContextLayout;
   unit: FocusUnit;
+  scrollUp: ScrollUpBehavior;
   speeds: SpeedSettings;
 }
 
-export const DEFAULT_SPEEDS: SpeedSettings = { R2: 1, R1: 220, F1: 180, F2: 280, F3: 420 };
+export const DEFAULT_SPEEDS: SpeedSettings = { F1: 180, F2: 280, F3: 420 };
 
 export function initialState(): ReaderState {
   return {
     cursor: 0,
     notch: 'P',
-    lastForward: 'F2',
     view: 'focused',
-    scheme: 'latched',
     layout: 'replace',
     unit: 'word',
+    scrollUp: 'pause',
     speeds: { ...DEFAULT_SPEEDS },
   };
 }
 
 export function selectNotch(state: ReaderState, notch: Notch): ReaderState {
-  return { ...state, notch, lastForward: notch.startsWith('F') ? notch as ReaderState['lastForward'] : state.lastForward };
+  return { ...state, notch };
 }
 
-export function shiftNotch(state: ReaderState, by: number): ReaderState {
-  const next = Math.max(0, Math.min(NOTCHES.length - 1, NOTCHES.indexOf(state.notch) + by));
-  return selectNotch(state, NOTCHES[next]);
+export function presentationFor(state: ReaderState): 'manual' | 'context' | 'strip' | 'word' | 'phrase' {
+  if (state.view === 'manual') return 'manual';
+  if (state.notch === 'P' || state.notch === 'F1') return 'context';
+  if (state.notch === 'F2') return 'strip';
+  return state.unit;
+}
+
+export function applyWheel(state: ReaderState, deltaY: number, lines: number[][] = []): ReaderState {
+  if (!Number.isFinite(deltaY) || deltaY === 0) return state;
+  const focused: ReaderState = { ...state, view: 'focused' };
+  if (deltaY < 0) {
+    if (state.scrollUp === 'step' && state.notch !== 'P') {
+      return selectNotch(focused, NOTCHES[NOTCHES.indexOf(state.notch) - 1]);
+    }
+    return stepPreviousLine(focused, lines);
+  }
+  const next = Math.min(NOTCHES.length - 1, NOTCHES.indexOf(state.notch) + 1);
+  return selectNotch(focused, NOTCHES[next]);
 }
 
 export function stepWord(state: ReaderState, count: number, wordCount: number): ReaderState {
@@ -59,8 +70,8 @@ export function stepWord(state: ReaderState, count: number, wordCount: number): 
 
 export function stepPreviousLine(state: ReaderState, lines: number[][]): ReaderState {
   const lineIndex = lines.findIndex((line) => line.includes(state.cursor));
-  if (lineIndex <= 0) return selectNotch(state, 'P');
-  return { ...state, cursor: lines[lineIndex - 1][0] };
+  const cursor = lineIndex < 0 ? state.cursor : lines[Math.max(0, lineIndex - 1)][0];
+  return { ...state, notch: 'P', cursor };
 }
 
 export function phraseEndIndex(passage: Passage, first: number): number {
@@ -70,12 +81,14 @@ export function phraseEndIndex(passage: Passage, first: number): number {
   return last;
 }
 
+export function playbackEndIndex(state: ReaderState, passage: Passage): number {
+  return state.notch === 'F3' && state.unit === 'phrase' ? phraseEndIndex(passage, state.cursor) : state.cursor;
+}
+
 export function delayFor(state: ReaderState, passage: Passage): number {
   const notch = state.notch;
   if (notch === 'P') return Infinity;
-  if (notch === 'R2') return 1000 / state.speeds.R2;
   const base = 60000 / state.speeds[notch];
-  if (notch === 'R1') return base;
   const pause = passage.words[state.cursor]?.pauseAfter;
   return base + (pause === 'paragraph' ? 420 : pause === 'sentence' ? 260 : pause === 'clause' ? 160 : pause === 'comma' ? 90 : 0);
 }

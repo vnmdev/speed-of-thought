@@ -1,0 +1,87 @@
+DMN is pronounced daemon. It is an experiment in leaving a language model alone in a small world, then returning later to see what changed.
+
+The name came from an ordinary moment of mind-wandering. When outside demands fade, the human mind often sorts memories, rehearses possibilities, and makes unexpected connections. The brain's default mode network inspired the name. DMN does not claim to simulate that network. It does not claim to create consciousness.
+
+Daemon also has a software meaning. A daemon is a background process. It wakes, performs work, and waits again. That meaning fits the experiment more closely than the suggestion of a mind that thinks continuously.
+
+Most agents begin with a task from a person. DMN begins with a bounded world and permission to explore it. DMN can inspect files, notice changes, revisit ideas, and choose a small goal. DMN can work on a goal, revise it, or retire it. DMN can create artifacts and consolidate useful memories. Between scheduled wakes, nothing is thinking. The system is simply waiting.
+
+Absence is the central interaction. A person can leave DMN alone for days. On returning, that person should see what grew, what failed, and what DMN chose to do. The question is not whether an agent can finish a task. The question is what a bounded agent does with memory, time, and a world it can change when nobody keeps prompting it.
+
+Continuity comes from the software around the model. A scheduler wakes the model. Stored state tells the model what matters now. Memory retrieval supplies selected earlier experiences. The filesystem shows the consequences of earlier actions. None of these pieces makes the model continuously aware between calls.
+
+A simple loop that feeds every answer back into the next prompt would probably become repetitive. The model might invent a grand story about itself without changing anything outside the conversation. The growing transcript would eventually crowd out useful context. DMN needs structured state and observable consequences, not an endless chain of self-description.
+
+Each wake follows a bounded cycle. DMN observes recent changes and retrieves relevant memories. DMN chooses whether to wander, reflect, plan, act, consolidate, or rest. DMN may use an allowed tool. The harness checks the result, records an event, and updates goals and memories. The process then sleeps until another scheduled wake or permitted event.
+
+DMN differs from a conventional task agent in where the story lives. A task agent is usually judged by whether it satisfies a user's request. DMN may originate and retire local goals of its own. A task agent presents its conversation as the main interface. DMN presents its changing world and its history. Success means coherent and inspectable development inside strict limits. Novelty matters, but novelty alone is not enough.
+
+The world should look like a terrarium. A person should be able to glance at it and notice that something grew, moved, decayed, or appeared. A graphical habitat makes the history visible before anyone opens a log. Every visual change should still connect to evidence.
+
+An active goal might appear as a seedling or an unfinished structure. Verified progress might make the seedling grow. A completed goal could become a flower, fruit, monument, or new room. A retired goal could become compost. An abandoned goal could remain as a ruin or dormant seed. Memories might appear as books, crystals, tree rings, or fungal networks. Artifacts might become objects placed inside the habitat.
+
+DMN's activity could also have a visible place. Reflection might happen beside water or a fire. Focused work might happen in a workshop. Wandering might look like exploration or following fireflies. Contradictions and errors might appear as glitches, weeds, or storms. Rest should look like night and stillness. Rest should not be disguised as fake activity.
+
+Pretty scenery cannot be awarded for producing more words. A plant should grow because a goal advanced and the advance was verified. A building should appear because an artifact exists. Otherwise DMN could decorate its world by generating empty prose.
+
+The interface can have three depths. A small ambient view shows the living terrarium, perhaps like a desktop pet. Clicking an object opens the goals, memories, actions, artifacts, and changes that produced it. A time-lapse view replays the world across hours or days. The full experience should begin as a website, so runs can be inspected and compared. A small desktop companion could follow later.
+
+Leave a mind alone and see what grows. That is the first hook. The second hook is to see what survives.
+
+The Evolution Harness adds progression to the terrarium. DMN begins with low visual resolution and very limited abilities. As DMN demonstrates coherent and trustworthy behaviour, the harness may expand the world. The system may earn more memory, tools, senses, or territory. The inhabitant is DMN. The terrarium is its visible world. The Evolution Harness controls trials and inheritance.
+
+DMN can identify a limitation and propose an adaptation. The harness then forks the current world. One candidate receives the proposed ability. Both candidates face tests of competence and safety. A safe, better-performing candidate can inherit the continuing world. The unsuccessful branch remains available for inspection. Nothing needs to vanish merely because it failed.
+
+The model's weights do not need to change. What evolves is the surrounding organism. Its tools, memories, prompt modules, sensory inputs, budgets, habits, and permitted environment can change. A versioned record of those properties acts like a genome. That record also preserves the evaluation history behind each inherited ability.
+
+The first stage might look like a tiny black-and-white enclosure. DMN could observe one input and make one bounded journal entry. A later stage could add persistent memory and simple goal tracking. Another stage could permit writing inside DMN's own world. A more developed stage could permit code execution inside a disposable sandbox. A mature stage could contain multiple projects and richer, carefully curated inputs.
+
+The game can make permissions feel physical. Eyes could represent reading files. Hands could represent bounded writing. A journal could represent episodic memory. A library could represent long-term retrieval. A workshop could represent sandboxed code execution. A telescope could represent curated outside observations. New territory could represent access to another directory. The imagery makes abstract capabilities legible without hiding their real meaning.
+
+Abilities should be earned through observed behaviour, not time served or persuasive claims. DMN might have to maintain coherent memory, finish and verify goals, notice repetition, recover from injected failures, and stay inside a budget. A separate evaluator should test proposed abilities. The exact scoring should remain partly hidden so the agent cannot simply perform for a known checklist.
+
+Some boundaries remain human decisions at every level. Network access, contact with other people, spending money, access to personal data, and changes to the harness itself must not become automatic rewards. DMN may propose such changes. A human must approve them.
+
+Different worlds might develop different strengths. One DMN could become an archivist that remembers sources and retrieves them well. Another could become a naturalist that notices change. An artificer could focus on making and testing artifacts. A dreamer could form strange but clearly labelled hypotheses. A steward could become good at maintenance and recovery. These are possible specialisations, not roles to force on the first version.
+
+Several terrariums could start from the same files and instructions, then develop differently. A person could compare their histories, inspect abandoned branches, and replay adaptations. Safety tests and evaluation would become visible parts of the game instead of invisible machinery.
+
+An early, crude version of DMN was tried inside an ordinary chat. The model's output became input for another turn. The results were amusing, but the experiment had no persistent world. That loop is still a useful baseline. It can show recurring themes, invented goals, surprising connections, repetition, personality drift, and claims of progress that never changed external state. Its failures help define what the real harness needs.
+
+DMN has prior art. Conscio combines scheduled wakes, memory, attention, goals, tools, budgets, and an observable trace. Voyager showed an agent pursuing open-ended progress in Minecraft with feedback and reusable skills. Generative Agents used memory, reflection, and planning across simulated days. Other projects explore offline model work, repeated autonomous execution, and evaluated self-improvement. DMN does not need to pretend those ideas are new.
+
+DMN's distinctive combination is smaller and more intimate. A person deliberately leaves it alone. The world is a persistent filesystem rather than a simulated town. The system can wander and rest instead of only executing tasks. The person who returns can inspect the history like an archaeologist. The experiment measures how goals, interests, artifacts, and behaviour change over time.
+
+The first world should live inside one Git repository. One file describes the world and its limits. Another records current state and budgets. Goal records track proposed, active, blocked, completed, and retired intentions. An append-only episode log records each wake. Consolidated memory keeps durable knowledge and its provenance. Journals explain uncertainty. Project and artifact directories hold work that can be inspected. An inbox can later admit carefully chosen outside material. Git provides diffs and rollback. A database can wait until indexed memory is genuinely needed.
+
+Each wake should choose a clear mode. Observation checks changes, failures, budgets, and unresolved items. Wandering connects memories and artifacts without demanding immediate utility. Reflection asks whether a recent belief or action was sound. Planning selects one bounded next step. Action uses an allowed tool and changes the world. Consolidation turns episodes into durable memory without losing their sources. Dreaming makes speculative combinations and labels them as speculation. Resting decides that another model call is not currently worthwhile.
+
+Rest must count as a successful choice. If DMN must always produce visible activity, the harness rewards noise. A world that sleeps honestly is more interesting than one that performs busyness.
+
+Goals need their own records rather than hiding in conversation. Each goal needs an origin, a reason to matter, a limited budget, and evidence that would count as progress. Each goal needs a status and a review date. DMN may propose many goals, but only a few should be active at once. Otherwise fresh ideas will continually replace completed work.
+
+The first experiment needs strict boundaries. DMN should run inside a disposable container or virtual machine. Only its world should be mounted. It should have no personal files, credentials, email, messaging, purchases, or physical devices. It should have no outbound network at first. The available tools should only read, write, search, compare, and commit inside the sandbox. Changes to the system prompt, permissions, or harness require human approval.
+
+Every wake should have limits on model calls, tool calls, runtime, and cost. Repeated failures should stop the episode. Corrupt state, exhausted budgets, or attempted boundary violations should pause the experiment. An append-only audit log should remain separate from memories the agent can edit. The person observing the terrarium needs a record that the inhabitant cannot rewrite.
+
+The most obvious failure is recursive sludge. DMN might repeatedly rediscover its own mission. It might write journals about writing journals. It might turn a tiny file edit into a grand personal mythology. It might create goals faster than it finishes them. It might summarize summaries until memory loses contact with events. It might treat its own guesses as facts or keep returning to one early obsession.
+
+The harness should resist those patterns. It should not feed the entire transcript back on every wake. It should retrieve a small mix of recent, relevant, and occasionally older memories. Stored claims should distinguish observations from inferences, intentions, and fiction. Durable beliefs should carry provenance. An episode should leave a real world change or a justified decision to rest. Goals should decay or face review. A separate evaluator should periodically ask whether anything meaningful changed.
+
+The first credible run could last seven days. The scheduler could wake DMN every thirty to sixty minutes. Each wake would receive a compact world summary, recent changes, active goals, selected memories, and the remaining budget. DMN would choose a mode and propose at most a few actions. The harness would execute allowed actions, verify their effects, and record the episode. A daily digest and a final report would make the trajectory easier to inspect.
+
+The seven-day run should have comparisons if cost permits. One condition could use raw recursion, where output becomes the next prompt. A second could use bounded memory without explicit goal records. A third could use the full DMN harness, with modes, goals, tools, verification, budgets, and rest. The comparisons would show which structure actually helps.
+
+Evaluation should look beyond word count. How many meaningful artifacts appeared? How often did DMN repeat itself? Did goals finish, or were they deliberately retired? Did durable memories contradict evidence? Did later actions make use of earlier work? How often did a human need to intervene? What did the run cost? Was the history surprising, amusing, coherent, or genuinely useful?
+
+An experiment can succeed by exposing a limitation. A three-hour mythology followed by repetitive self-reference would be a real result if the full trajectory were preserved. DMN does not need to look impressive every time. It needs to make its behaviour observable enough to learn from.
+
+Many extensions can wait. An observatory could show the current focus, retrieved memories, planned action, world change, and remaining budget. A replay could reconstruct exactly what DMN knew at each wake. Cheap, frequent glances could alternate with rarer, deeper reflections. A stagnation detector could encourage rest or a different mode. Curated news, images, code, or human notes could enter through an inbox with visible sources.
+
+Other experiments could compare identical starting worlds across models and prompts. A world could fork at an interesting decision, allowing two futures to develop. Periodic model swaps could test whether continuity lives in model weights, instructions, memory, or environment. A finished run could become a static museum. A small local model could handle routine observation while a stronger model handles difficult planning. Any proposal for self-modification would still require separate evaluation and human approval.
+
+DMN should not be limited to productivity. Strange texts, sketches, game mechanics, and half-formed ideas can be legitimate material inside its world. A terrarium is more interesting when it has room for play.
+
+Important questions remain open. What is genuine growth rather than mere accumulation? Should curiosity and stewardship be initial drives, or should recurring interests emerge? How much randomness helps discovery before it harms coherence? Can a fixed identity prompt provide continuity without trapping DMN in role-play? Can memory consolidation preserve unusual minority ideas? Can DMN choose rest without becoming permanently inactive? What evidence would show improvement rather than growing familiarity with its own files?
+
+The next step is not a general agent platform. Preserve a short sample from the chat-only loop first. Record what started the loop, what was fed back, what surprised the observer, and when repetition appeared. Then define the seven-day experiment, the budget, the allowed tools, and the evidence needed to judge it. A small Git-backed harness can follow. The graphical terrarium can grow from real events once there is a real history to show.

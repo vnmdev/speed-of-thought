@@ -1,9 +1,23 @@
 # Speed of Thought
 
-An experimental browser reader for LLM conversations. Instead of scanning a long chat response, you follow one focused thought at a time, control its pace, rewind into context, and eventually branch from the point that caught your attention.
+Speed of Thought is a planned LLM harness for conversations that are easier to read and follow. The first working piece is a browser-based RSVP (rapid serial visual presentation) reader for large blocks of text.
 
-The first experiment uses reader-supplied text with a sample answer prefilled. The question is whether the interaction is pleasant and useful before connecting a model or building a full chat application.
+## Planned capabilities
+
+- A conversational interface with LLMs from various API providers.
+- The RSVP reader already present in the prototype, integrated into conversations to help with reading large blocks of text.
+- A system prompt that adjusts prose for easier reading.
+- Full Markdown support.
+- Possible split views or branching that keep both the original content and a more digestible version available.
+
+## Current prototype
+
+The local reader supports adjustable playback, line rewind, context and focused views, wheel and arrow-key controls, and saved WPM preferences. It starts with a sample passage and lets you enter your own text.
+
+LLM connections, the conversational interface, prose-adjusting prompts, full Markdown rendering, and branching are planned; they are not implemented yet. This first experiment explores whether the reading interaction is comfortable and useful.
+
+See [proof-of-concept](proof-of-concept/) for the prototype and instructions for running it locally.
 
 See [PLAN.md](PLAN.md) for the interaction design, milestones, and open questions.
 
-Status: a local browser prototype is available in [proof-of-concept](proof-of-concept/). See its README for how to run it.
+The [DMN terrarium sample](samples/dmn-terrarium.txt) is plain prose prepared for the reader. Paste it into **edit passage** to try a longer text.

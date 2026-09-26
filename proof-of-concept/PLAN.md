@@ -2,52 +2,48 @@
 
 ## Goal
 
-Find out whether focused playback and contextual rewind make long prose answers easier and more comfortable to read. Use a single browser page with an editable text box prefilled with a representative multi-paragraph answer. Compare each interaction with ordinary scrolling of the same text.
+Explore whether focused playback and contextual rewind make long prose easier and more comfortable to read. Use a local browser page with an editable default passage. Keep the interface dark, monospace, and inspired by Monkeytype.
 
 ## Reading model
 
-- Segment the entered passage into paragraphs, sentences, and words. Give segments stable IDs and text offsets so a change in viewport width cannot move the saved reading position. Loading changed text starts a new reading position.
-- Keep one reading position shared by focused playback, recovery, and ordinary scrolling.
-- F1 shows the current rendered line with a word-by-word highlight. F2 and F3 show a focused word or short phrase. Add modest punctuation pauses and a visible speed setting.
-- Keep controls separate from the playback state. This lets us compare them without changing the text or position model.
+- Segment prose into paragraphs, sentences, and words, preserving source offsets and a single word position across views and viewport changes.
+- Loading a changed passage starts paused at the first word.
+- P and F1 share a context block with a highlighted current word. Compare the block alone with a split layout beside a focused word.
+- F2 centres one current word with up to three faded neighbors on each side. F3 presents an isolated word or a short phrase.
+- Each forward mode has configurable WPM, saved in browser local storage across refreshes, with punctuation pauses added. Animate zoom between context, strip, and focused text; respect reduced-motion preferences.
 
-## Shared pace selector
+## Wheel and arrow-key control
 
-The selector is linear: **R2 · R1 · P · F1 · F2 · F3**.
+The linear mode readout is **P · F1 · F2 · F3**. Up and down arrow keys mirror the wheel using the same saved behavior, except when editing a form field or using modified key shortcuts. It is not clickable or draggable.
 
-| Notch | Behavior |
+| Action | Behavior |
 | --- | --- |
-| R2 | Move backward through visual lines at a configurable pace, showing context and highlighting the current word. |
-| R1 | Move backward word by word at a configurable pace. |
-| P | Pause. |
-| F1 | Highlight words forward across the whole rendered line at a slow, configurable pace. |
-| F2 | Play forward at a comfortable, configurable pace with a focused word or phrase. |
-| F3 | Play forward at a maximum, configurable pace with a focused word or phrase. |
+| Scroll up: straight to pause (default) | Immediately pause and jump to the first word of the previous rendered line. |
+| Scroll up: step down speeds | Decrease one mode per tick: F3 → F2 → F1 → P, keeping the word position. Further upward ticks rewind one line. |
+| Further upward ticks | Move back one line per tick while paused, clamping at the passage start. |
+| Scroll down while paused | Start F1 at the selected word. |
+| Further downward ticks | Advance to F2, then F3; remain at F3 on further ticks. |
 
-The held drag returns to P on release. The latched drag stays on the selected notch. Wheel movement changes the selected notch. Since visual lines reflow, the saved location remains a word position rather than a line number.
+Save the scroll-up setting in browser local storage alongside WPM preferences. There is no reverse playback mode. Each vertical wheel event triggers one action without a distance threshold or cooldown. Listen across the page, including ordinary reading. Preserve native scrolling in form fields and the open source editor, and preserve browser pinch zoom.
 
-## Build sequence
+## Implementation
 
-1. Add a text box with a reasonable multi-paragraph default passage and a Load button that resets to the first word. Build the segment model, position tracking, and keyboard play/pause and step controls.
-2. Add F1 line playback, F2/F3 focused playback, speed adjustment, punctuation pauses, and a focused word/short-phrase switch.
-3. Add two reverse modes. R1 backs up word by word at a configurable pace. R2 moves through earlier visual lines at a configurable pace while highlighting the current word. Let the reader choose a restart point. Provide two layouts to compare: context replaces the focused view, or context appears beside it.
-4. Add ordinary scrolling with synchronized position when entering or leaving focused mode.
-5. Add three selectable input schemes using the shared six-notch selector: a held drag that returns to P on release, a latched drag that stays on the chosen notch, and a scroll wheel that changes notches. Let the reader adjust the speed values of the paced zones.
-6. Compare the same passage in ordinary and focused reading. Record subjective comfort and comprehension, how often recovery is used, and time to find a lost place. Keep this lightweight; no account or analytics service is needed.
+1. Keep segmentation and wheel transitions separate from DOM rendering. Cover transition behavior and passage boundaries with state tests.
+2. Measure visual lines at the context layout's actual width, including when rewinding from F2/F3. Preserve word position when the viewport changes.
+3. In straight-to-pause mode, cancel playback immediately on upward input. In step-down mode, slow one mode per tick until P. Keep the paused context visible until another action.
+4. Maintain the same context layout across P/F1, and animate transitions to and from F2/F3.
+5. Retain per-mode WPM inputs, the F3 word/phrase setting, and both context layouts.
+6. Keep an ordinary passage view with a scrollbar and clickable restart words. Wheel input returns to the reader. Use an edit-passage button to replace the reader with the editor in the same space. Suspend pace controls while editing, and provide load and cancel actions to return to the reader.
+7. Compare comprehension, comfort, and recovery time on the same passage. Check single ticks and rapid direction changes on a mouse and trackpad.
 
 ## Done when
 
-- A reader can start, pause, adjust pace, rewind into context, select a restart point, and resume without losing their place.
-- The three input schemes and two recovery layouts can be switched on the same passage.
-- A reader can enter a passage and read it in any mode.
-- Focused and ordinary views agree on the current reading position.
-- Keyboard access works without a sustained pointer gesture.
-- The page behaves sensibly with both a mouse wheel and a trackpad.
+- Straight-to-pause mode pauses and rewinds one line per upward tick. Step-down mode visits each slower mode before pausing, then rewinds on further upward ticks.
+- Downward ticks proceed from P through F1–F3, and resume at F1 after rewind.
+- Both context layouts preserve word position and line rewind at different widths.
+- A reader can edit the passage, configure WPM, select a restart word, and switch views.
+- Unit tests and production build pass; browser checks cover wheel scope, timer cancellation, and zoom transitions when browser tooling is available.
 
 ## Out of scope
 
-Model calls, conversation forks, persistence, code and table playback, accounts, and a full chat interface.
-
-## Implementation detail to test
-
-- Tune wheel movement so a mouse wheel and trackpad can select one notch deliberately without accidental jumps.
+Model calls, conversation forks, passage/session persistence, code and table playback, accounts, and a full chat interface. No drag-based transport controls in this iteration.
